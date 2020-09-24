@@ -1,6 +1,6 @@
 // jshint esversion:6
 const express = require('express');
-// const path = require('path');
+const path = require('path');
 const dotenv = require('dotenv');
 const ejs = require('ejs');
 const bodyParser = require('body-parser');
@@ -11,9 +11,13 @@ const morgan = require('morgan');
 const passport = require("passport");
 const session = require("express-session");
 // const MongoStore = require("connect-mongo")(session);
+// const bcrypt = require('bcrypt');
 const Student = require('./modals/Student');
 const connectDB = require("./config/db");
 
+
+// Salt rounds for bcrypt = 9 =>20 hash/sec
+// const saltRounds = 9;
 
 // Load config
 dotenv.config({path:'./config/config.env'});
@@ -47,17 +51,10 @@ connectDB();
 // use createStrategy method of model
 passport.use(Student.createStrategy());
 
+
 // use static serialize and deserialize of model for passport session support
-passport.serializeUser(function(user, done) {
-  done(null,user.id);
-});
-
-passport.deserializeUser(function(id, done) {
-  Student.findById(id, function(err, user) {
-    done(err, user);
-  });
-});
-
+passport.serializeUser(Student.serializeUser());
+passport.deserializeUser(Student.deserializeUser());
 
 
 
@@ -67,7 +64,14 @@ app.get('/',(req,res)=>{
 });
 
 app.get('/dashboard',(req,res)=>{
-    res.render('dashboard');
+  // console.log(req.user);
+  if(req.isAuthenticated()) res.render('dashboard');
+  else res.redirect('/login');
+});
+
+app.get("/logout", function (req, res) {
+  req.logout();
+  res.redirect("/");
 });
 
 app.get("/login", function (req, res) {
@@ -77,6 +81,68 @@ app.get("/login", function (req, res) {
 app.get("/register", function (req, res) {
   res.render("register");
 });
+
+
+app.post("/register",(req,res)=>{
+    var username = req.body.username;
+  var email = req.body.email;
+  var password = req.body.password;
+  var confirmPassword = req.body.confirmpassword;
+
+
+  Student.findOne({username: username},function(err,foundUser){
+    if(err) console.log(err);
+    else if(foundUser)
+    {  
+      res.redirect("/login");  
+    }
+    else if(!foundUser)
+    {
+       var ind = email.indexOf("@");
+
+       var domain = email.slice(ind + 1,email.length);
+       console.log(domain);
+         
+           if (password === confirmPassword && domain==="nitp.ac.in") {
+            Student.register(
+              { username: username,email:email,password:password },
+              req.body.password,
+              function (err, user) {
+                if (err) {
+                  console.log(err);
+                  res.redirect("/register");
+                } else {
+                  passport.authenticate("local")(req, res, function () {
+                    res.redirect("/dashboard");
+                  });
+                }
+              }
+            );
+         } else res.redirect("/register");
+       
+    }
+
+  });
+  console.log(username+ " " + email + " " + password);
+});
+
+
+app.post("/login",(req,res)=>{
+  const user = new Student({
+    username: req.body.username,
+    password: req.body.password,
+  });
+
+  req.login(user, function (err) {
+    if (err) console.log(err);
+    else {
+      passport.authenticate("local")(req, res, function () {
+        res.redirect("/dashboard");
+      });
+    }
+  });
+});
+
 
 // Logging
 if(process.env.NODE_ENV === 'development') 
@@ -90,3 +156,6 @@ app.listen(
     PORT,
     console.log(`Server is running in ${process.env.NODE_ENV} mode on port ${PORT}`)
 );
+
+
+

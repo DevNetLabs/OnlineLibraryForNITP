@@ -2,57 +2,57 @@
 const mongoose = require('mongoose');
 const findOrCreate = require("mongoose-findorcreate");
 const passportLocalMongoose = require("passport-local-mongoose");
-require("mongoose-type-email");
+require("mongoose-type-email"); 
 
 const UserSchema = new mongoose.Schema({
   googleId: {
     type: String,
-    required: true,
+    required: false,
   },
   displayName: {
     type: String,
-    required: true,
+    required: false,
   },
   firstName: {
     type: String,
-    required: true,
+    required: false,
   },
   lastName: {
     type: String,
-    required: true,
+    required: false,
   },
   username: {
     type: String,
-    required: true,
+    unique: true,
   },
   email: {
     type: mongoose.SchemaTypes.Email,
-    required: true,
+    unique:true,
   },
   password: {
     type: String,
-    required: true,
+    unique: true,
   },
   books: {
     bookId: {
       type: String,
-      required: true,
+      required: false,
     },
     bookName: {
       type: String,
-      required: true,
+      required: false,
     },
     bookAuthor: {
       type: String,
-      required: true,
+      required: false,
     },
     bookTopic: {
       type: String,
-      required: true,
+      required: false,
     },
     deadLine: {
       type: Date,
-      required: true,
+      required: false,
     },
   },
   createdAt: {
