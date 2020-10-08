@@ -2,7 +2,8 @@
 const mongoose = require('mongoose');
 const findOrCreate = require("mongoose-findorcreate");
 const passportLocalMongoose = require("passport-local-mongoose");
-require("mongoose-type-email"); 
+require("mongoose-type-email");
+var bcrypt = require('bcrypt-nodejs');
 
 const UserSchema = new mongoose.Schema({
   googleId: {
@@ -24,14 +25,17 @@ const UserSchema = new mongoose.Schema({
   username: {
     type: String,
     unique: true,
+    required:true
   },
   email: {
     type: mongoose.SchemaTypes.Email,
     unique:true,
+    required:true
   },
   password: {
     type: String,
     unique: true,
+    required: true
   },
   books: {
     bookId: {
@@ -54,6 +58,16 @@ const UserSchema = new mongoose.Schema({
       type: Date,
       required: false,
     },
+  },
+  resetPasswordToken : {
+    type: String
+  },
+  resetPasswordExpires:{
+      type:Date
+  },
+  isAdmin : {
+     type:Boolean,
+     default:false
   },
   createdAt: {
     type: Date,
