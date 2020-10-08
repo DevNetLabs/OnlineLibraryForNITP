@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 
@@ -12,3 +13,19 @@
     <i class="fab fa-google"></i>
     Sign Up with Google
 </a>
+=======
+
+
+
+
+
+
+
+
+
+
+<a class="btn btn-block btn-social btn-google" href="/auth/google" role="button">
+    <i class="fab fa-google"></i>
+    Sign Up with Google
+</a>
+>>>>>>> f0248d05d4ec77d1182b16bdd6d16478c8bf00e1
