@@ -28,7 +28,7 @@ h1{
   background-color: #6ebfb5;
 }
 
-hr {
+.hr-main {
   width: 8%;
   border-top-style: dotted;
   border-width: 12px;
@@ -37,11 +37,12 @@ hr {
   border-color: #c22828;
 }
 .home-body{
-  margin:0% 5% 5%;
+  padding:0% 5% 5%;
+  padding-bottom: 0%;
   background: #cffffe;
   text-align: center;
 }
-.register-body{
+.register-block{
   margin:0% 5% 5%;
   background: #cffffe;
   text-align: left;
@@ -80,4 +81,7 @@ hr {
 
 .center{
   margin: 0% 50% 50%;
+}
+.footer{
+  background: red;
 }
