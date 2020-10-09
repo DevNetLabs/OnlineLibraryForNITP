@@ -18,6 +18,9 @@ var flash = require('connect-flash');
 var async = require('async');
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
+const cors = require('cors');
+
+
 
 
 // Salt rounds for bcrypt = 9 =>20 hash/sec
@@ -34,6 +37,12 @@ app.set('view engine','ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 // Static folder
 app.use(express.static("public"));
+
+
+
+// Use cors api
+app.use(cors());
+
 
 // express session
 app.use(
@@ -65,8 +74,8 @@ passport.deserializeUser(Student.deserializeUser());
 
 app.use(function (req, res, next) {
   res.locals.currentUser = req.user;
-  res.locals.success = req.flash("success");
-  res.locals.error = req.flash("error");
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
   next();
 });
 
@@ -76,7 +85,7 @@ app.get('/',(req,res)=>{
 });
 
 app.get('/dashboard',(req,res)=>{
-  console.log(req.user);
+  // console.log(req.user);
   if(req.isAuthenticated()) res.render('dashboard',{name:req.user.firstName});
   else res.redirect('/login');
 });
@@ -90,15 +99,13 @@ app.get("/register", function (req, res) {
   res.render("register");
 });
 
-
+/*
 app.post("/register",(req,res)=>{
     var username = req.body.username;
   var email = req.body.email;
   var password = req.body.password;
   var confirmPassword = req.body.confirmpassword;
-  var firstname = req.body.firstName;
-  var lastname = req.body.lastName;
-  var displayName = firstname+" "+lastname;
+
 
   Student.findOne({username: username},function(err,foundUser){
     if(err) console.log(err);
@@ -111,14 +118,11 @@ app.post("/register",(req,res)=>{
        var ind = email.indexOf("@");
 
        var domain = email.slice(ind + 1,email.length);
-       console.log(domain);
+      //  console.log(domain);
          
            if (password === confirmPassword && domain==="nitp.ac.in") {
             Student.register(
-              { username: username,
-                email:email,password:password,
-                firstName:firstname,lastName:lastname,displayName:displayName
-               },
+              { username: username,email:email,password:password },
               req.body.password,
               function (err, user) {
                 if (err) {
@@ -136,11 +140,228 @@ app.post("/register",(req,res)=>{
     }
 
   });
+  console.log(username+ " " + email + " " + password);
+});
+*/
 
 
-  console.log(username+ " "+firstname + email + " " + password);
+app.post("/register",(req,res)=>{
+    var username = req.body.username;
+  var email = req.body.email;
+  var password = req.body.password;
+  var confirmPassword = req.body.confirmpassword;
+
+
+  Student.findOne({username: username,email:email,password:password},function(err,foundUser){
+    if(err) console.log(err);
+    else if(foundUser)
+    {  
+      res.redirect("/login");  
+    }
+    else if(!foundUser)
+    {
+       var ind = email.indexOf("@");
+
+       var domain = email.slice(ind + 1,email.length);
+       console.log(domain);
+         
+           if (password === confirmPassword && domain==="nitp.ac.in") {
+            
+       
+             Student.register(
+              { username: username,email:email,password:password },
+              req.body.password,
+              function (err, user) {
+                if (err) {
+                  console.log(err);
+                  res.redirect("/register");
+                } 
+                else {
+                  async.waterfall([
+                    function (done) {
+        crypto.randomBytes(20, function (err, buf) {
+          var token = buf.toString("hex");
+          console.log(token);
+          done(err, token);
+        });
+      },
+      function (token, done) {
+        Student.findOne({ email: req.body.email }, function (err, user) {
+          if (!user) {
+            req.flash("error", "No account with that email address exists.");
+            return res.redirect("/register");
+          }
+
+          user.activationToken = token;
+          user.activationTokenExpires = Date.now() + 3600000; // 1 hour later
+
+          user.save(function (err) {
+            done(err, token, user);
+          });
+        });
+      },
+      function (token, user, done) {
+        var smtpTransport = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: "devnetlabs@gmail.com",
+            pass: process.env.GMAILPW,
+          },
+        });
+        var mailOptions = {
+          to: user.email,
+          from: "devnetlabs@gmail.com",
+          subject: "Online Library Password Reset",
+          text:
+            "You are receiving this because you (or someone else) have requested the register your account for our library.\n\n" +
+            "Please click on the following link, or paste this into your browser to complete the process:\n\n" +
+            "http://" +
+            req.headers.host +
+            "/active/" +
+            token +
+            "\n\n" +
+            "If you did not request this, please ignore this email and your temporary account will expire in 1 hour.\n",
+        };
+        smtpTransport.sendMail(mailOptions, function (err) {
+          console.log("mail sent");
+          req.flash(
+            "success",
+            "An e-mail has been sent to " + user.email +" with further instructions."
+            );
+          done(err, "done");
+        });
+      },
+      function(){
+        res.redirect("/inactive");
+      },
+                  ]);
+                  
+                }
+                  
+               } );
+    }
+       else res.redirect("/register");
+  
+         } 
+       else res.redirect("/register");
+
+        
+
+  });
+  console.log(username+ " " + email + " " + password);
 });
 
+
+app.get("/inactive",function(req,res){
+  res.render("inactive");
+});
+
+app.get("/active/:token",function(req,res){
+  Student.findOne(
+    {
+      activationToken: req.params.token,
+      activationTokenExpires: { $gt: Date.now() },
+    },
+    function (err, user) {
+      if (!user) {
+        req.flash("error", "Activation token is invalid or has expired.");
+         Student.findOne(
+          {
+            activationToken:req.params.token,
+          },
+          function(err,user)
+          {
+            if(!user){req.flash("error", "Activation token is invalid or has expired.");}
+            else{
+              Student.deleteOne({activationToken:req.params.token},function(err){
+                       if(err) console.log(err);
+              });
+            }
+          }
+        );
+        return res.redirect("/register");
+      }
+      else
+      {
+        return res.render("active" ,{ token: req.params.token });
+      }  
+    }
+  );
+});
+
+app.post("/active/token",function(req,res){
+   async.waterfall(
+    [
+      function (done) {
+        Student.findOne(
+          {
+            activationToken: req.params.token,
+            activationTokenExpires: { $gt: Date.now() },
+          },
+          function (err, user) {
+            if (!user) {
+              req.flash(
+                "error",
+                "Activation token is invalid or has expired."
+              );
+               Student.findOne(
+          {
+            activationToken:req.params.token,
+          },
+          function(err,user)
+          {
+            if(!user){req.flash("error", "Activation token is invalid or has expired.");}
+            else{
+              Student.deleteOne({activationToken:req.params.token},function(err){
+                       if(err) console.log(err);
+              });
+            }
+          }
+        );
+              return res.redirect("back");
+            }
+              
+                user.activationToken = undefined;
+                user.activationTokenExpires = undefined;
+                user.isActive = true;
+
+                user.save(function (err) {
+                  req.logIn(user, function (err) {
+                    done(err, user);
+                  });
+                 } );
+          });
+             
+          },
+      function (user, done) {
+        var smtpTransport = nodemailer.createTransport({
+          service: "Gmail",
+          auth: {
+            user: "devnetlabs@gmail.com",
+            pass: process.env.GMAILPW,
+          },
+        });
+        var mailOptions = {
+          to: user.email,
+          from: "devnetlabs@gmail.com",
+          subject: "Your account has been activated",
+          text:
+            "Hello,\n\n" +
+            "This is a confirmation that your account has been registered." +
+            user.email +
+            " has just been changed.\n",
+        };
+        smtpTransport.sendMail(mailOptions, function (err) {
+          req.flash("success", "Success! Your account has been activated.");
+          done(err);
+        });
+      },
+    ],
+    function (err) {
+      res.redirect("/dashboard");
+    }
+  );
+});
 
 app.post("/login",(req,res)=>{
   const user = new Student({
@@ -161,7 +382,7 @@ app.post("/login",(req,res)=>{
 // Logout
 app.get("/logout", function (req, res) {
   req.logout();
-  req.flash('Succcess',"See you later");
+  req.flash('succces',"See you later");
   res.redirect("/");
 });
 
@@ -316,6 +537,7 @@ app.post("/reset/:token", function (req, res) {
     }
   );
 });
+
 
 
 

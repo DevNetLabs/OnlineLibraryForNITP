@@ -1,0 +1,16 @@
+<%- include('partials/header') %>
+
+
+<div class="row">
+    <div class="col-md-12">
+        <form action="/active/<%= token %>" method="POST">
+            <legend>Activate Account</legend>
+            
+            <div class="form-group">
+                <a href="/dashboard" type="submit" role="button" class="btn btn-primary">Go to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
