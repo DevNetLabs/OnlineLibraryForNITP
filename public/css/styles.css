@@ -81,3 +81,8 @@ hr {
 .center{
   margin: 0% 50% 50%;
 }
+
+.form-group i {
+    margin-left: -30px;
+    cursor: pointer;
+}
