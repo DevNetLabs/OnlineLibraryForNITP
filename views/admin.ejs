@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+
+<body>
+    <nav class="navbar navbar-light bg-ligit nav-color">
+        <a class="navbar-brand" href="#">
+            <img src="/logo.png" width="90" height="90" class="d-inline-block align-top" alt="">
+            <h1 style="display:inline;">National Institue Of Technology,Patna</h1>
+        </a>
+    </nav>
+    <br><br>
+
+    <h6>Admin Dashboard</h6>
+    <h3>Welcome <%= name %> </h3>
+    <p>Here is book database</p>
+
+    <a class="btn btn-primary" href="/logout" role="button">Logout</a>
+    <a class="btn btn-primary" href="/registerBook" role="button">Add Book</a>
+</body>
+
+<%- include('partials/footer') %>

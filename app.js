@@ -1,4 +1,4 @@
-// jshint esversion:6
+// jshint esversion:9
 const express = require('express');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -13,6 +13,7 @@ const session = require("express-session");
 // const MongoStore = require("connect-mongo")(session);
 // const bcrypt = require('bcrypt');
 const Student = require('./modals/Student');
+const Book = require('./modals/Book');
 const connectDB = require("./config/db");
 var flash = require('connect-flash');
 var async = require('async');
@@ -99,50 +100,49 @@ app.get("/register", function (req, res) {
   res.render("register");
 });
 
-/*
-app.post("/register",(req,res)=>{
-    var username = req.body.username;
-  var email = req.body.email;
-  var password = req.body.password;
-  var confirmPassword = req.body.confirmpassword;
+
+// app.post("/register",(req,res)=>{
+//     var username = req.body.username;
+//   var email = req.body.email;
+//   var password = req.body.password;
+//   var confirmPassword = req.body.confirmpassword;
 
 
-  Student.findOne({username: username},function(err,foundUser){
-    if(err) console.log(err);
-    else if(foundUser)
-    {  
-      res.redirect("/login");  
-    }
-    else if(!foundUser)
-    {
-       var ind = email.indexOf("@");
+//   Student.findOne({username: username},function(err,foundUser){
+//     if(err) console.log(err);
+//     else if(foundUser)
+//     {  
+//       res.redirect("/login");  
+//     }
+//     else if(!foundUser)
+//     {
+//        var ind = email.indexOf("@");
 
-       var domain = email.slice(ind + 1,email.length);
-      //  console.log(domain);
+//        var domain = email.slice(ind + 1,email.length);
+//       //  console.log(domain);
          
-           if (password === confirmPassword && domain==="nitp.ac.in") {
-            Student.register(
-              { username: username,email:email,password:password },
-              req.body.password,
-              function (err, user) {
-                if (err) {
-                  console.log(err);
-                  res.redirect("/register");
-                } else {
-                  passport.authenticate("local")(req, res, function () {
-                    res.redirect("/dashboard");
-                  });
-                }
-              }
-            );
-         } else res.redirect("/register");
+//            if (password === confirmPassword && domain==="nitp.ac.in") {
+//             Student.register(
+//               { username: username,email:email,password:password },
+//               req.body.password,
+//               function (err, user) {
+//                 if (err) {
+//                   console.log(err);
+//                   res.redirect("/register");
+//                 } else {
+//                   passport.authenticate("local")(req, res, function () {
+//                     res.redirect("/dashboard");
+//                   });
+//                 }
+//               }
+//             );
+//          } else res.redirect("/register");
        
-    }
+//     }
 
-  });
-  console.log(username+ " " + email + " " + password);
-});
-*/
+//   });
+//   console.log(username+ " " + email + " " + password);
+// });
 
 
 app.post("/register",(req,res)=>{
@@ -373,7 +373,9 @@ app.post("/login",(req,res)=>{
     if (err) console.log(err);
     else {
       passport.authenticate("local")(req, res, function () {
-        res.redirect("/dashboard");
+        // console.log(req.user);
+        if(req.user.isAdmin===true) res.redirect("/admin");
+        else res.redirect("/dashboard");
       });
     }
   });
@@ -538,9 +540,78 @@ app.post("/reset/:token", function (req, res) {
   );
 });
 
+// Admin
+app.get('/admin',(req,res)=>{
+  // console.log(req.user);
+  if(req.isAuthenticated()) res.render('admin',{name:req.user.firstName});
+  else res.redirect('/login');
+});
 
 
+// RegisterBook
+app.get('/registerBook',(req,res)=>{
+  if(req.isAuthenticated() && (req.user.isAdmin))
+  {
+    res.render('registerBook',{name:req.user.firstName});
+  }
+  else res.redirect('/login');
+});
 
+app.post('/registerBook',(req,res)=>{
+  // console.log(req.body);
+  const tags = req.body.bookTags;
+  const tagArr = tags.split(',');
+  // console.log(tagArr);
+  const bookId = req.body.bookId;
+  const bookName = req.body.bookName;
+  const qty = req.body.qty;
+  const bookAuthor = req.body.bookAuthor;
+  const bookSubject = req.body.bookSubject;
+
+   Book.findOne({bookId:bookId},async (err,book)=>{
+     try {
+        if(book)
+    { 
+      req.flash('Book is already registered');
+      res.redirect('/admin');
+    }
+    else if(!book)
+    {
+      if(bookId==null || bookName==null || qty==null || bookAuthor==null || bookSubject==null)
+      {
+        alert('Please enter all the fields');
+      }
+      else 
+      {
+        mybook = new Book({
+          bookId:bookId,
+          bookName:bookName,
+          bookAuthor:bookAuthor,
+          qty:qty,
+          bookSubject:bookSubject,
+          bookTags:tagArr
+        });
+
+        await mybook.save();
+        res.redirect('/admin');
+      }
+    }
+  } catch (error) {
+       console.log(error);
+     }
+   });
+     
+});
+
+// Server error
+app.get('/500',(req,res)=>{
+  res.redirect('/home');
+});
+
+// Resource not found
+app.get('/404',(req,res)=>{
+  res.redirect('/home');
+});
 
 // Logging
 if(process.env.NODE_ENV === 'development') 
