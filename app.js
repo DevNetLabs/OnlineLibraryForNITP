@@ -80,9 +80,14 @@ app.use(function (req, res, next) {
   next();
 });
 
+app.get('/',(req, res)=>{
+    res.redirect("/404");
+});
 
-app.get('/',(req,res)=>{
-  res.render('home');
+app.get('/home',(req,res)=>{
+  if(req.isAuthenticated()) res.render('home');
+  else res.redirect('/404');
+  
 });
 
 app.get('/dashboard',(req,res)=>{
@@ -605,12 +610,12 @@ app.post('/registerBook',(req,res)=>{
 
 // Server error
 app.get('/500',(req,res)=>{
-  res.redirect('/home');
+  res.render('500');
 });
 
 // Resource not found
 app.get('/404',(req,res)=>{
-  res.redirect('/home');
+  res.render('404');
 });
 
 // Logging
