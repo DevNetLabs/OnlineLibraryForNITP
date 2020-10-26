@@ -1,0 +1,60 @@
+<%- include('partials/header') %>
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>REGISTER</title>
+<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="Style.css"/>
+</head>
+<body>
+			<div class="login container">
+				<div class="row">
+		
+					<div class="column col-md-6 col-lg-6">
+                       <div class="imgcontainer">
+                       <img src="Image4.jpg" alt="Avatar" class="avatar">
+					   </div>
+					   <a href="Login.html" id="Account">Already have an Account?Login</a>
+					</div>
+					
+     			    <div class="second col-md-6 col-lg-6">
+					<form id="form_Register" action="action_page.php" method="post">
+					<h1 id="Login">Create Account</h1>
+					<label for="uname"><b>Name</b></label>
+                    <input type="text" placeholder="Enter Username" name="uname" required>
+                    <label for="uname"><b>Email</b></label>
+                    <input type="text" placeholder="Enter Email" name="uname" required>
+                    <label for="psw"><b>Password</b></label>
+                    <input type="password" placeholder="Enter Password" name="psw" required>
+					<button type="submit">Register</button>
+					</form>
+					</div>
+				    </div>
+	            </div>
+        
+		
+		<!-- Bootstrap JS -->
+		<script
+			src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+			integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+			integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+			integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+			crossorigin="anonymous"
+		></script>
+</body>
+</html>
+
+<%- include('partials/footer') %>
