@@ -7,12 +7,33 @@
     </a>
   </nav>
   <br><br>
-
+<div>
   <h6>Student Dashboard</h6>
   <h3>Welcome <%= name %> </h3>
   <p>Here are your Books</p>
-
+  
   <a class="btn btn-primary" href="/logout" role="button">Logout</a>
+</div>
+
+
+<div class="main">
+  <form action="/dashboard" method="POST">
+    <div class="form-group">
+  <div class="input-group">
+    <input type="text" class="form-control" placeholder="Search any book" name="bookQuery">
+    <div class="input-group-append">
+      <button class="btn btn-secondary" type="submit">
+        <i class="fa fa-search"></i>
+      </button>
+    </div>
+  </div>
+    </div>
+  </form>
+  
+</div>
+
+
+  
 
 </body>
 
