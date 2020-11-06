@@ -96,6 +96,47 @@ app.get('/dashboard',(req,res)=>{
   else res.redirect('/login');
 });
 
+// Book search results
+app.post('/dashboard',(req,res)=>{
+  // console.log(req.user);
+  if (req.isAuthenticated())
+  {
+    var queryTerm = req.body.bookQuery;
+    // console.log(queryTerm);
+    var queryArr = queryTerm.split(' ');
+    // console.log(queryArr);
+    Book.find({bookTags:{$in:queryArr}},(err,books)=>{
+      if(books)
+      {
+        // console.log(books);
+        req.app.locals.resultArr = books;
+      }
+      else if(!books)
+      {
+        // console.log("No book found!");
+      }
+
+      if(err) console.log(err);
+
+      res.redirect('/bookSearchRes');
+    });
+  } 
+  else res.redirect('/login');
+
+  
+
+});
+
+app.get('/bookSearchRes',(req,res)=>{
+  // console.log(req.user);
+  
+  // results = req.params.results
+  var resultArr = req.app.locals.resultArr;
+  if (req.isAuthenticated()) res.render('bookSearchRes', { name: req.user.firstName, results:resultArr});
+  else res.redirect('/login');
+  // console.log(resultArr);
+});
+
 
 app.get("/login", function (req, res) {
   res.render("login");
@@ -155,9 +196,19 @@ app.post("/register",(req,res)=>{
   var email = req.body.email;
   var password = req.body.password;
   var confirmPassword = req.body.confirmpassword;
+  var firstName = req.body.firstName;
+  var lastName = req.body.lastName;
 
+  Student.findOne(
+    {
+      username: username,
+      email:email,
+      password:password,
+      firstName: firstName,
+      lastName:lastName
+    },
 
-  Student.findOne({username: username,email:email,password:password},function(err,foundUser){
+    function(err,foundUser){
     if(err) console.log(err);
     else if(foundUser)
     {  
@@ -174,7 +225,12 @@ app.post("/register",(req,res)=>{
             
        
              Student.register(
-              { username: username,email:email,password:password },
+               {
+                 username: username,
+                 email: email,
+                 password: password,
+                 firstName: firstName,
+                 lastName: lastName},
               req.body.password,
               function (err, user) {
                 if (err) {
