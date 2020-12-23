@@ -14,12 +14,15 @@ const session = require("express-session");
 // const bcrypt = require('bcrypt');
 const Student = require('./modals/Student');
 const Book = require('./modals/Book');
-const connectDB = require("./config/db");
+const {connectDB,gfs} = require("./config/db");
 var flash = require('connect-flash');
 var async = require('async');
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
+var multer = require('multer');
+const gridFsStorage = require('multer-gridfs-storage');
 const cors = require('cors');
+
 
 
 
@@ -44,6 +47,23 @@ app.use(express.static("public"));
 // Use cors api
 app.use(cors());
 
+
+//Configure storage details for multer upload
+var storage = multer.diskStorage({
+  
+  //Set the upload destination through a function with null/no callback
+  destination:function(req,file,cb)
+  {
+    cb(null,'./public/uploads');
+  },
+  //Set the filename with another function having null/no callback again as we are sure of the event
+  filename(req,file,cb)
+  {
+       cb(null,file.originalname+'_'+Date.now());
+  }
+});
+//Activate multer with the configured storage details
+var upload = multer({storage:storage}).single('bookUpload');
 
 // express session
 app.use(
