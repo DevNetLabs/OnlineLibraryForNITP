@@ -118,7 +118,7 @@ for (const link of menuLinks) {
           </a>
         </li>
         <li>
-          <a href="#0">
+          <a href="#search">
             <svg>
               <use xlink:href="#search"></use>
             </svg>
@@ -129,7 +129,7 @@ for (const link of menuLinks) {
           <h3>Settings</h3>
         </li>
         <li>
-          <a href="#0">
+          <a href="#1">
             <svg>
               <use xlink:href="#settings"></use>
             </svg>
@@ -171,7 +171,24 @@ for (const link of menuLinks) {
       <article style="background-color:aquamarine"><h3>Names and details of Books Issued</h3></article>
       <article style="background-color: blueviolet;"><h3>Fine Due</h3></article>
       <article style="background-color:rgb(95, 219, 37)"><h3>Due Dates</h3></article>
-      <article></article>
+      <article style="background-color:red">
+        <div class="ui category search" id="search">
+          <h3>Search Any Book</h3>
+          <form action="/dashboard" method="POST">
+            <div class="form-group">
+              <div class="ui icon input input-group">
+                <input type="text" class="form-control" placeholder="Search any book" name="bookQuery">
+                <div class="input-group-append">
+                  <button class="prompt btn btn-secondary" type="submit">
+                    <i class="search icon"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        
+        </div>
+      </article>
       <article></article>
       <article></article>
       <article></article>
