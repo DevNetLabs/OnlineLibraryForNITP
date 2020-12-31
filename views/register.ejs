@@ -1,44 +1,48 @@
 <%- include('partials/header') %>
-<body class="register-body">
+<div class="register-body">
   <h2 style="text-align:center">Register yourself</h2>
   <br><br>
 
-  <div class="container-md register-block">
+  <div class="ui container">
+  <div class="ui form container-md register-block">
     <form action="/register" method="POST">
-        <div class="form-group">
+        <div class="form-group field">
             <label for="firstName">First Name</label>
             <input type="text" class="form-control" name="firstName" maxlength="30">
             <small class="form-text text-muted">Please enter your name in all CAPS.</small>
         </div>
-        <div class="form-group">
+        <div class="form-group field">
             <label for="lastName">Last Name</label>
             <input type="text" class="form-control" name="lastName" maxlength="30">
             <small class="form-text text-muted">Please enter your name in all CAPS.</small>
         </div>
-        <div class="form-group">
+        <div class="form-group field">
             <label for="email">Email</label>
             <input type="email" class="form-control" name="email">
             <small class="form-text text-muted">Please enter only your NITP domain email address.</small>
         </div>
-        <div class="form-group">
+        <div class="form-group field">
             <label for="username">Enrollment Number</label>
             <input type="number" class="form-control" name="username">
-            <small class="form-text text-muted">Same thet you use for entering Chanakya portal</small>
+            <small class="form-text text-muted">Same that you use for entering Chanakya portal</small>
         </div>
-        <div class="form-group">
+        <div class="form-group field">
             <label for="password">Password</label>
             <input type="password" class="form-control" name="password">
         </div>
-        <div class="form-group">
+        <div class="form-group field">
             <label for="confirmpassword">Confirm Password</label>
             <input type="password" class="form-control" name="confirmpassword">
         </div>
         <br><br>
-        <div class="center">
-          <button type="submit" class="btn btn-dark">Register</button>
-        </div>
+        <div class="ui six column centered row">
+            <button type="submit" class="column large ui inverted primary button">Register</button>
+            <div class="column"></div>
+            <div class="column"></div>
+            <div class="column"></div>
+            </div>
     </form>
   </div>
-
-</body>
+  </div>
+</div>
 <%- include('partials/footer') %>

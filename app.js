@@ -7,22 +7,22 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 // const exphbs = require('express-handlebars');
-// const methodOverride = require("method-override");
+const methodOverride = require("method-override");
 const passport = require("passport");
 const session = require("express-session");
 // const MongoStore = require("connect-mongo")(session);
 // const bcrypt = require('bcrypt');
 const Student = require('./modals/Student');
 const Book = require('./modals/Book');
-const {connectDB,gfs} = require("./config/db");
+// const {connectDB,gfs} = require("./config/db");
 var flash = require('connect-flash');
 var async = require('async');
 var nodemailer = require('nodemailer');
 var crypto = require('crypto');
 var multer = require('multer');
-const gridFsStorage = require('multer-gridfs-storage');
+const GridFsStorage = require('multer-gridfs-storage');
 const cors = require('cors');
-
+const gridFsStream = require('gridfs-stream');
 
 
 
@@ -47,23 +47,10 @@ app.use(express.static("public"));
 // Use cors api
 app.use(cors());
 
+//Use methodOverride
+app.use(methodOverride('_method'));
 
-//Configure storage details for multer upload
-var storage = multer.diskStorage({
-  
-  //Set the upload destination through a function with null/no callback
-  destination:function(req,file,cb)
-  {
-    cb(null,'./public/uploads');
-  },
-  //Set the filename with another function having null/no callback again as we are sure of the event
-  filename(req,file,cb)
-  {
-       cb(null,file.originalname+'_'+Date.now());
-  }
-});
-//Activate multer with the configured storage details
-var upload = multer({storage:storage}).single('bookUpload');
+
 
 // express session
 app.use(
@@ -83,7 +70,58 @@ app.use(passport.session());
 
 
 // Connect Mongo Cloud
+let gfs;
+var connectOptions = {
+  useNewUrlParser: true,
+  useFindAndModify: false,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+};
+
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGO_URI,connectOptions);
+     console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (err) {
+    console.log(err);
+    process.exit(1);
+  } 
+};
+
 connectDB();
+
+var connection = mongoose.connection;
+
+if(connection !== undefined) console.log(connection.readyState.toString());
+else console.log('Sorry, No gridFs Object');
+
+connection.once('open', ()=>{
+  //Initialize stream
+  gfs = gridFsStream(connection.db, mongoose.mongo);
+    gfs.collection('books');
+});
+
+// console.log(gfs);
+//Create Storage engine
+var storage = new GridFsStorage({
+  url: process.env.MONGO_URI,
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(16, (err, buf) => {
+        if (err) {
+          return reject(err);
+        }
+        const filename = buf.toString('hex') + path.extname(file.originalname);
+        const fileInfo = {
+          filename: filename,
+          bucketName: 'books'
+        };
+        resolve(fileInfo);
+      });
+    });
+  }
+});
+const upload = multer({ storage });
 
 // use createStrategy method of model
 passport.use(Student.createStrategy());
@@ -101,13 +139,12 @@ app.use(function (req, res, next) {
 });
 
 app.get('/',(req, res)=>{
-    res.redirect("/404");
+    // res.redirect("/404");
+    res.render('home')
 });
 
 app.get('/home',(req,res)=>{
-  if(req.isAuthenticated()) res.render('home');
-  else res.redirect('/404');
-  
+  res.render('home'); 
 });
 
 app.get('/dashboard',(req,res)=>{
@@ -291,8 +328,8 @@ app.post("/register",(req,res)=>{
         });
         var mailOptions = {
           to: user.email,
-          from: "devnetlabs@gmail.com",
-          subject: "Online Library Password Reset",
+          from: "DevNetLabs@gmail.com",
+          subject: "Online Library Account Registration",
           text:
             "You are receiving this because you (or someone else) have requested the register your account for our library.\n\n" +
             "Please click on the following link, or paste this into your browser to complete the process:\n\n" +
@@ -621,10 +658,24 @@ app.post("/reset/:token", function (req, res) {
   );
 });
 
+
 // Admin
 app.get('/admin',(req,res)=>{
   // console.log(req.user);
-  if(req.isAuthenticated()) res.render('admin',{name:req.user.firstName});
+  if (req.isAuthenticated() && (req.user.isAdmin)) 
+  {
+     gfs.files.find().toArray((err,files)=>{
+       if(!files || files.length===0)
+       {
+         res.render('admin', { name: req.user.firstName,files:null});
+       }
+       else
+       {
+         res.render('admin', { name: req.user.firstName,files:files });
+       }
+     });
+    
+  }
   else res.redirect('/login');
 });
 
@@ -638,7 +689,7 @@ app.get('/registerBook',(req,res)=>{
   else res.redirect('/login');
 });
 
-app.post('/registerBook',(req,res)=>{
+app.post('/registerBook', upload.single('bookUpload'),(req,res)=>{
   // console.log(req.body);
   const tags = req.body.bookTags;
   const tagArr = tags.split(',');
@@ -648,6 +699,8 @@ app.post('/registerBook',(req,res)=>{
   const qty = req.body.qty;
   const bookAuthor = req.body.bookAuthor;
   const bookSubject = req.body.bookSubject;
+  // console.log({file:req.file});
+  const filename = req.file.filename;
 
    Book.findOne({bookId:bookId},async (err,book)=>{
      try {
@@ -670,7 +723,8 @@ app.post('/registerBook',(req,res)=>{
           bookAuthor:bookAuthor,
           qty:qty,
           bookSubject:bookSubject,
-          bookTags:tagArr
+          bookTags:tagArr,
+          fileName:filename
         });
 
         await mybook.save();
@@ -682,6 +736,48 @@ app.post('/registerBook',(req,res)=>{
      }
    });
      
+});
+
+// @ GET /bookSearchRes/:filename
+app.get('/bookSearchRes/:filename',function(req,res){
+  if (req.isAuthenticated()) {
+    gfs.files.findOne({filename:req.params.filename},(err,file)=>{
+
+      if(!file || file.length===0)
+      {
+        res.render('bookSearchResSingle',{name:req.user.firstName,file:null});
+      }
+      else res.render('bookSearchResSingle', { 
+        name: req.user.firstName,
+         file: file,
+         downloadLink:'/bookSearchRes/download/'+file.filename,
+        });
+    });
+  }
+  else res.redirect('/login');
+});
+
+// @ GET /bookSearchRes/:filename
+app.get('/bookSearchRes/download/:filename', function (req, res) {
+  if (req.isAuthenticated()) {
+    gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
+
+      if (!file || file.length === 0) {
+        res.render('bookSearchResSingle', { name: req.user.firstName, file: null });
+      }
+      else if(file.contentType==='application/pdf')
+        {
+          const readstream = gfs.createReadStream(file.filename);
+          readstream.pipe(res);
+        }
+        else
+        {
+          res.redirect('/bookSearchResSingle/'+file.filename);
+        }
+      
+    });
+  }
+  else res.redirect('/login');
 });
 
 // Server error

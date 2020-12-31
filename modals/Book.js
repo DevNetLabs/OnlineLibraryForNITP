@@ -31,6 +31,9 @@ const BookSchema = new mongoose.Schema({
    bookTags:{
        type:[],
        required:true
+   },
+   filename:{
+       type:String,
    }
     
 });
